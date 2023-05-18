@@ -1,0 +1,100 @@
+type: edu
+files:
+- name: analysis.py
+  visible: true
+  text: |+
+    import pandas as pd
+    import numpy as np
+
+    pd.set_option('display.max_columns', 8)
+    general = pd.read_csv("test/general.csv")
+    prenatal = pd.read_csv("test/prenatal.csv")
+    sports = pd.read_csv("test/sports.csv")
+
+    prenatal.rename(columns={"HOSPITAL": "hospital", "Sex": "gender"}, inplace=True)
+    sports.rename(columns={"Hospital": "hospital", "Male/female": "gender"}, inplace=True)
+
+    data = pd.concat([general, prenatal, sports], ignore_index=True)
+    data.drop(columns="Unnamed: 0", inplace=True)
+    sample_data = data.sample(n=20, random_state=30)
+
+    data.dropna(axis = 0, how = 'all', inplace = True) # remove rows with all NaNs
+    # wrangling gender column:
+    data['gender'].replace(['female', 'woman'], 'f', inplace=True)
+    data['gender'].replace(['man', 'male'], 'm', inplace=True)
+    cond = (data['gender'].isnull()) & (data['hospital'] == "prenatal")
+    data.loc[cond, 'gender'] = "f"
+    data.fillna(0, inplace=True) # fill the rest of the columns with zeros
+    print(data.shape)
+    print(data.sample(n=20, random_state=30))
+
+
+  learner_created: false
+- name: test/__init__.py
+  visible: false
+  learner_created: false
+- name: test/general.csv
+  visible: false
+  learner_created: false
+- name: test/prenatal.csv
+  visible: false
+  learner_created: false
+- name: test/sports.csv
+  visible: false
+  learner_created: false
+- name: test/tests.py
+  visible: false
+  text: |
+    from hstest.stage_test import StageTest
+    from hstest.test_case import TestCase
+    from hstest.check_result import CheckResult
+
+    answers = ['general', '0.325', '0.285', '19', ('prenatal', '325')]
+
+
+    class EDATest(StageTest):
+        def generate(self):
+            return [TestCase()]
+
+        def check(self, reply, attach):
+            lines = [line for line in reply.split('\n') if len(line) > 0]
+
+            if len(lines) !=5:
+                return CheckResult.wrong(
+                    'You should output exactly 5 lines with answer to each question in each line. '
+                    f'Found {len(lines)} lines')
+
+            if answers[0] not in lines[0].lower():
+                return CheckResult.wrong('The answer to the 1st question is incorrect')
+
+            if answers[1] not in lines[1]:
+                return CheckResult.wrong('The answer to the 2nd question is incorrect')
+
+            if answers[2] not in lines[2]:
+                return CheckResult.wrong('The answer to the 3rd question is incorrect')
+
+            if answers[3] not in lines[3]:
+                return CheckResult.wrong('The answer to the 4th question is incorrect')
+
+            if answers[4][0] not in lines[4].lower():
+                return CheckResult.wrong('The name of the hospital in the answer to the 5th is incorrect')
+            if answers[4][1] not in lines[4].lower():
+                return CheckResult.wrong('The number of blood tests in the answer to the 5th is incorrect')
+
+            return CheckResult.correct()
+
+
+    if __name__ == '__main__':
+        EDATest('analysis').run_tests()
+  learner_created: false
+- name: tests.py
+  visible: false
+  text: |
+    from test.tests import EDATest
+
+    if __name__ == '__main__':
+        EDATest('analysis').run_tests()
+  learner_created: false
+feedback_link: https://hyperskill.org/projects/152/stages/804/implement#comment
+status: Solved
+record: 4
